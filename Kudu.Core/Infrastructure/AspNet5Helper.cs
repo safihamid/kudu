@@ -54,20 +54,17 @@ namespace Kudu.Core.Infrastructure
         {
             aspNetSdk = null;
             var globalJson = Path.Combine(rootPath, "global.json");
-            if (File.Exists(globalJson))
+            if (FileSystemHelpers.FileExists(globalJson))
             {
-                using (var reader = new StreamReader(globalJson))
+                var parsedGlobalJson = JObject.Parse(FileSystemHelpers.ReadAllText(globalJson));
+                if (parsedGlobalJson["sdk"] != null)
                 {
-                    var parsedGlobalJson = JObject.Parse(reader.ReadToEnd());
-                    if (parsedGlobalJson["sdk"] != null)
+                    aspNetSdk = parsedGlobalJson["sdk"].ToObject<AspNet5Sdk>();
+                    if (string.IsNullOrEmpty(aspNetSdk.Architecture))
                     {
-                        aspNetSdk = parsedGlobalJson["sdk"].ToObject<AspNet5Sdk>();
-                        if (string.IsNullOrEmpty(aspNetSdk.Architecture))
-                        {
-                            aspNetSdk.Architecture = GetDefaultAspNet5RuntimeArchitecture();
-                        }
-                        return true;
+                        aspNetSdk.Architecture = GetDefaultAspNet5RuntimeArchitecture();
                     }
+                    return true;
                 }
             }
             return false;
